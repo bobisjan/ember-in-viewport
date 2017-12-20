@@ -9,8 +9,10 @@ const defaultTolerance = {
   right: 0
 };
 
-export default function isInViewport(boundingClientRect = {}, height = 0, width = 0, tolerance = defaultTolerance) {
-  const { top, left, bottom, right } = boundingClientRect;
+export default function isInViewport(elementRect, contextRect, tolerance = defaultTolerance) {
+  const { top, left, bottom, right } = elementRect;
+  const { top: topMin, left: leftMin, bottom: bottomMax, right: rightMax } = contextRect;
+
   const tolerances = assign(assign({}, defaultTolerance), tolerance);
   const {
     top: topTolerance,
@@ -20,9 +22,9 @@ export default function isInViewport(boundingClientRect = {}, height = 0, width 
   } = tolerances;
 
   return (
-    (top + topTolerance)       >= 0 &&
-    (left + leftTolerance)     >= 0 &&
-    (Math.round(bottom) - bottomTolerance) <= Math.round(height) &&
-    (Math.round(right) - rightTolerance)   <= Math.round(width)
+    (top + topTolerance)                   >= topMin &&
+    (left + leftTolerance)                 >= leftMin &&
+    (Math.round(bottom) - bottomTolerance) <= Math.round(bottomMax) &&
+    (Math.round(right) - rightTolerance)   <= Math.round(rightMax)
   );
 }

@@ -27,7 +27,7 @@ const lastPosition = {};
 export default Mixin.create({
   /**
    * IntersectionObserverEntry
-   * 
+   *
    * @property observer
    * @default null
    */
@@ -107,7 +107,7 @@ export default Mixin.create({
     if (get(this, 'viewportUseIntersectionObserver')) {
       const { top, left, bottom, right } = this.viewportTolerance;
       const options = {
-        root: scrollableArea, 
+        root: scrollableArea,
         rootMargin: `${top}px ${right}px ${bottom}px ${left}px`,
         threshold: get(this, 'intersectionThreshold')
       };
@@ -115,15 +115,25 @@ export default Mixin.create({
       this.observer = new IntersectionObserver(bind(this, this._onIntersection), options);
       this.observer.observe(element);
     } else {
-      const $contextEl = scrollableArea ? $(scrollableArea) : $(window);
-      const boundingClientRect = element.getBoundingClientRect();
+      let context = scrollableArea;
+      if (!context) {
+        context = Ember.testing ? document.getElementById('ember-testing-container') : window;
+      }
 
-      if (boundingClientRect) {
+      const elementRect = element.getBoundingClientRect();
+      let contextRect;
+
+      if (context === window) {
+        contextRect = { top: 0, left: 0, bottom: context.innerHeight, right: context.innerWidth };
+      } else {
+        contextRect = context.getBoundingClientRect();
+      }
+
+      if (elementRect) {
         this._triggerDidAccessViewport(
           isInViewport(
-            boundingClientRect,
-            $contextEl.innerHeight(),
-            $contextEl.innerWidth(),
+            elementRect,
+            contextRect,
             get(this, 'viewportTolerance')
           )
         );
@@ -133,12 +143,12 @@ export default Mixin.create({
           );
         }
       }
-    } 
+    }
   },
 
   /**
    * callback provided to IntersectionObserver
-   * 
+   *
    * @method _onIntersection
    * @param {Array} - entries
    */
@@ -222,7 +232,12 @@ export default Mixin.create({
   _bindScrollDirectionListener(sensitivity = 1) {
     assert('sensitivity cannot be 0', sensitivity);
 
-    const $contextEl = get(this, 'scrollableArea') ? $(get(this, 'scrollableArea')) : $(window);
+    let contextEl = get(this, 'scrollableArea');
+    if (!contextEl) {
+      contextEl = Ember.testing ? '#ember-testing-container' : window;
+    }
+
+    const $contextEl = $(contextEl);
 
     $contextEl.on(`scroll.directional#${get(this, 'elementId')}`, () => {
       this._debouncedEventHandler('_triggerDidScrollDirection', $contextEl, sensitivity);
